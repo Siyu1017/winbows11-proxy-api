@@ -3,19 +3,23 @@ const axios = require('axios');
 const cors = require('cors');
 const cheerio = require('cheerio');
 const { URL } = require('url');
+const bodyParser = require('body-parser');
 
 const app = express();
 const PORT = 8000;
 
 app.use(cors());
+app.use(bodyParser.json())
 
-app.use(express.json());
-
-app.post('/api', async (req, res) => {
+app.post('/api/view', async (req, res) => {
     const { url } = req.body;
 
     if (!url) {
-        return res.status(400).json({ error: 'Missing URL parameter' });
+        return res.status(400).json({
+            status: 'error',
+            code: '500',
+            message: 'Missing URL parameter'
+        });
     }
 
     try {
@@ -44,9 +48,21 @@ app.post('/api', async (req, res) => {
         res.send($.html());
     } catch (error) {
         console.error('Error fetching URL content:', error.message);
-        res.status(500).json({ error: 'Error fetching or parsing URL content' });
+        res.status(500).json({
+            status: 'error',
+            code: '500',
+            message: 'Error fetching or parsing URL content'
+        });
     }
 });
+
+app.use(express.static(__dirname), (req, res, next) => {
+    res.status(404).json({
+        status: 'error',
+        code: '404',
+        message: 'Page not found'
+    })
+})
 
 app.listen(PORT, () => {
     console.log(`Server running!`);
